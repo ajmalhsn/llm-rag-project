@@ -1,9 +1,0 @@
-fastapi
-uvicorn[standard] # to run uvicorn in ec2 we need to run the uvicorn standard
-langchain ## LLM framework
-chromadb ## chromadb used to connect to vectorDB
-pypdf ## reading pdf
-sentence-transformers ## convert sentence to embeddings
-openai ## training 
-python-multipart
-python-dotenv # to read the env config via .env file using ec2
