@@ -1,0 +1,5 @@
+LLM -- 500 charactera at a time
+chunking - dividing the 100000 characters input into 500 characters
+
+each packet is known as chunks
+
