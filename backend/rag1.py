@@ -4,6 +4,8 @@
 """
 import os
 from pypdf import PdfReader
+from dotenv import load_dotenv
+load_dotenv("./.env")
 
 """
     SentenceTransformer is the predefined class
@@ -26,9 +28,18 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 # collection = client.create_collection("pdf_data")
 # client = chromadb.HttpClient(host="localhost", port=8001)
 # collection = client.get_or_create_collection("pdf_data")
-CHROMA_DIR = os.getenv("CHROMA_DIR", "/app/chroma_data")
+
+# local writable folder
+CHROMA_DIR = "./chroma_data"
+# create client
 client = chromadb.PersistentClient(path=CHROMA_DIR)
-collection = client.get_or_create_collection("pdf_data")
+# collection
+collection = client.get_or_create_collection(
+    name="pdf_data"
+)
+# CHROMA_DIR = os.getenv("CHROMA_DIR", "/app/chroma_data")
+# client = chromadb.PersistentClient(path=CHROMA_DIR)
+# collection = client.get_or_create_collection("pdf_data")
 
 
 # read pdf file

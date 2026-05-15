@@ -8,7 +8,7 @@ from fastapi import File
 # shutil is the predefined python library
 # shutil, used to receive pdf files and save to local path
 import shutil
-from rag import (
+from rag1 import (
     read_pdf,
     chunk_text,
     create_embeddings,

@@ -1,0 +1,151 @@
+LLMOps
+******
+    llm-rag-project
+                backend
+                    rag.py (main rag file)
+                    main.py (FastAPI)
+                    requirements.txt (Dependencies)
+
+                uploads (Store the pdf files)
+
+                .env (api-key) (store the API Key)
+                
+                .gitignore (control the GitHub Commits)
+
+                Dockerfile (create Docker Image)
+
+                Jenkinsfile (create Pipeline)
+
+                .dockerignore (controls the commits in Docker Image)
+
+step 1.
+    modify requirements.txt file accroding to AWS Server
+
+    python-dotenv (reading keys from .env file)
+
+    uvicorn[standard] (suitable version run application in aws cloud)
+
+Step 2.
+    create .env file
+
+Step 3.
+    remove api key from "rag.py" and read from ".env" file
+
+Step 4.
+    create .gitignore file
+
+Step 5.
+    create the Dockerfile
+
+Step 6.
+    create Pipeline (Jenkinsfile)
+
+    Stage1. Checkout code from GitHub
+
+    Stage2. Build Docker Image (Dockerfile) 
+
+    Stage3. Push DockerImage to "DockerHub" (Optional) (GitHub)
+
+    Stage4: Deploy Docker Image in AWS Server
+
+Stage 7.
+    create .dockerignore file
+
+Step 8.
+    push complete build to GitHub
+
+    > git add .
+
+    > git commit -m "LLM Rag Project Ready"
+
+    > git remote add origin https://github.com/toolsknowledge/llmops.git
+
+    > git push -u origin master
+
+Step 9.
+    create EC2 instance (llm-rag-project)
+        Note : SSD size >25GB
+
+Step 10.
+        allocate IP Address with the help of ElasticIP
+
+        IP Address : 51.21.24.145
+
+Step 11.
+        Open the below ports
+            8000 (uvicorn)
+            8080 (Jenkins)
+            3000 (ReactJS)
+
+Step 12.
+        connect to EC2 Server (SSH Terminal) and update ubuntu
+
+        > sudo apt update -y
+
+Step 13.
+    install java (Jenkins installation depending on Java)
+
+            https://www.jenkins.io/doc/book/installing/linux/
+
+            sudo apt install fontconfig openjdk-21-jre -y
+            java -version
+
+Step 14.
+        install Jenkins
+
+Step 15.
+        install docker
+
+        > sudo apt install docker.io -y
+        > docker --version
+
+Step 16.
+        enable permissions between docker,jenkins and ubuntu
+
+        > sudo usermod -aG jenkins ubuntu
+        > sudo usermod -aG docker ubuntu
+        > sudo usermod -aG docker jenkins
+
+Step 17.
+        restart both Jenkins and Docker
+        > sudo systemctl restart jenkins
+        > sudo systemctl restart docker
+
+Step 18.
+        connect to jenkins
+
+        http://51.21.24.145:8080/
+
+        password: sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+Step 19.
+        install below plugins
+        1) Git server
+        2) Docker
+        3) Docker Pipeline
+        4) SSH
+        5) SSH Agent
+        6) AWS Credentials
+
+Step 20.
+        install Docker Desktop
+        URL : https://docs.docker.com/desktop/setup/install/windows-install/
+        username: excelr
+        password:
+
+Step 21.
+        add Credentials in Jenkins
+        1) OPENAI_API_KEY
+        2) EC2_HOST ubuntu@51.21.24.145
+        3) ec2-ssh-key (SSH Username w/ key)
+        4) dockerhub-creds (Username with password)
+
+Step 22.
+        build Pipeline
+
+        end point : http://51.21.24.145:8000/
+
+
+
+
+
