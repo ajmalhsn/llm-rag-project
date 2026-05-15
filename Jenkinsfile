@@ -75,7 +75,7 @@ pipeline {
             steps {
                 sshagent(credentials: ['ec2-ssh-key']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no $EC2_HOST "
+                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
                             docker pull ${DOCKERHUB_USER}/${IMAGE_NAME}:latest &&
                             docker stop llm-rag || true &&
                             docker rm   llm-rag || true &&
