@@ -82,8 +82,8 @@ pipeline {
                             mkdir -p /home/ubuntu/chroma_data /home/ubuntu/uploads &&
                             export OPENAI_API_KEY='${OPENAI_API_KEY}' &&
                             cd /home/ubuntu &&
-                            docker compose pull &&
-                            docker compose up -d --remove-orphans &&
+                            docker-compose pull &&
+                            docker-compose up -d --remove-orphans &&
                             docker image prune -f
                         "
                     '''

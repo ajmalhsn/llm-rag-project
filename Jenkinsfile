@@ -1,54 +1,46 @@
-// ------------------------------------------------------------
-// Jenkinsfile — CI/CD pipeline for LLM RAG Project
-// Trigger: GitHub webhook on push to master
-// Flow:    Checkout → Build Docker image → Push to Docker Hub
-//          → SSH to EC2 → Pull image → Restart container
-// ------------------------------------------------------------
 pipeline {
     agent any
 
     environment {
-        IMAGE_NAME     = "llm-rag-app"
+        BACKEND_IMAGE  = "llm-rag-app"
+        FRONTEND_IMAGE = "llm-rag-frontend"
         IMAGE_TAG      = "${env.BUILD_NUMBER}"
-        EC2_HOST       = credentials('EC2_HOST')          // e.g. ubuntu@1.2.3.4
-        OPENAI_API_KEY = credentials('OPENAI_API_KEY')    // Jenkins secret
-        DOCKERHUB_USER = "ajmalllm"                         // Your Docker Hub username
+        EC2_HOST       = credentials('EC2_HOST')
+        OPENAI_API_KEY = credentials('OPENAI_API_KEY')
+        DOCKERHUB_USER = "excelr"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                // Pulls whatever branch this job is configured to track
-                // (configured in Jenkins UI: Branch Specifier = */master)
                 checkout scm
                 echo "Building branch: ${env.BRANCH_NAME ?: 'master'}"
             }
         }
 
-        stage('Build Docker Image') {
-            // Only build/deploy from master — protects against feature branches
-            when {
-                anyOf {
-                    branch 'master'
-                    expression { env.BRANCH_NAME == null }   // classic Pipeline job
-                }
-            }
+        stage('Build Backend Image') {
+            when { anyOf { branch 'master'; expression { env.BRANCH_NAME == null } } }
             steps {
                 sh '''
-                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                    docker build -f Dockerfile -t ${BACKEND_IMAGE}:${IMAGE_TAG} .
+                    docker tag ${BACKEND_IMAGE}:${IMAGE_TAG} ${BACKEND_IMAGE}:latest
+                '''
+            }
+        }
+
+        stage('Build Frontend Image') {
+            when { anyOf { branch 'master'; expression { env.BRANCH_NAME == null } } }
+            steps {
+                sh '''
+                    docker build -f frontend/Dockerfile -t ${FRONTEND_IMAGE}:${IMAGE_TAG} ./frontend
+                    docker tag ${FRONTEND_IMAGE}:${IMAGE_TAG} ${FRONTEND_IMAGE}:latest
                 '''
             }
         }
 
         stage('Push to Docker Hub') {
-            when {
-                anyOf {
-                    branch 'master'
-                    expression { env.BRANCH_NAME == null }
-                }
-            }
+            when { anyOf { branch 'master'; expression { env.BRANCH_NAME == null } } }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
@@ -57,8 +49,13 @@ pipeline {
                 )]) {
                     sh '''
                         echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
-                        docker tag ${IMAGE_NAME}:latest $DH_USER/${IMAGE_NAME}:latest
-                        docker push $DH_USER/${IMAGE_NAME}:latest
+
+                        docker tag ${BACKEND_IMAGE}:latest  $DH_USER/${BACKEND_IMAGE}:latest
+                        docker tag ${FRONTEND_IMAGE}:latest $DH_USER/${FRONTEND_IMAGE}:latest
+
+                        docker push $DH_USER/${BACKEND_IMAGE}:latest
+                        docker push $DH_USER/${FRONTEND_IMAGE}:latest
+
                         docker logout
                     '''
                 }
@@ -66,25 +63,19 @@ pipeline {
         }
 
         stage('Deploy to EC2') {
-            when {
-                anyOf {
-                    branch 'master'
-                    expression { env.BRANCH_NAME == null }
-                }
-            }
+            when { anyOf { branch 'master'; expression { env.BRANCH_NAME == null } } }
             steps {
                 sshagent(credentials: ['ec2-ssh-key']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST "
-                            docker pull ${DOCKERHUB_USER}/${IMAGE_NAME}:latest &&
-                            docker stop llm-rag || true &&
-                            docker rm   llm-rag || true &&
-                            docker run -d \
-                                --name llm-rag \
-                                -p 8000:8000 \
-                                -e OPENAI_API_KEY='${OPENAI_API_KEY}' \
-                                --restart unless-stopped \
-                                ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+                        scp -o StrictHostKeyChecking=no docker-compose.yml $EC2_HOST:/home/ubuntu/docker-compose.yml
+
+                        ssh -o StrictHostKeyChecking=no $EC2_HOST "
+                            mkdir -p /home/ubuntu/chroma_data /home/ubuntu/uploads &&
+                            export OPENAI_API_KEY='${OPENAI_API_KEY}' &&
+                            cd /home/ubuntu &&
+                            docker-compose pull &&
+                            docker-compose up -d --remove-orphans &&
+                            docker image prune -f
                         "
                     '''
                 }
@@ -93,9 +84,8 @@ pipeline {
     }
 
     post {
-        success { echo "✅ Deployed build #${env.BUILD_NUMBER} successfully" }
+        success { echo "✅ Build #${env.BUILD_NUMBER} deployed — visit http://<EC2-IP>/" }
         failure { echo "❌ Build #${env.BUILD_NUMBER} failed — check logs" }
         always  { sh 'docker image prune -f || true' }
     }
 }
-
