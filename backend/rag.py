@@ -27,8 +27,7 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 # client = chromadb.HttpClient(host="localhost", port=8001)
 # collection = client.get_or_create_collection("pdf_data")
 CHROMA_DIR = os.getenv("CHROMA_DIR", "/app/chroma_data")
-client = chromadb.HttpClient(host="localhost", port=9000)
-client.port = 9000
+client = chromadb.PersistentClient(path=CHROMA_DIR) # Use the directory for persistent storage
 collection = client.get_or_create_collection("pdf_data")
 
 
